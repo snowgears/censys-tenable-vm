@@ -3,7 +3,8 @@ The Censys Tenable Vulnerability Management integration sits between the Censys 
 
 The integration queries the Censys ASM platform's logbook API and feeds newly found hosts into Tenables' vulnerability management tool. It also provides a list of hosts that are no longer found to be part of an organization's attack surface, which can be used to remove IPs from the Tenable Vulnerability Management assets dashboard.
 
-All IPs brought in from Censys will have 'Censys' as the source in Tenable to make them easy to sort on.
+All IPs brought in from Censys will have 'Censys Scan' as the source in Tenable to make them easy to sort on.  
+When Censys disassociates an IP from your attack surface, this will only be removed from Tenable if that asset's import source is also 'Censys Scan'
 
 ## In this guide: 
 - [Installation Considerations](#installation-considerations)

@@ -87,11 +87,11 @@ def get_new_hosts():
     return hosts
 
 # returns True if ip exists in Tenable. False if it does not exist in Tenable
-def check_ip_exists_in_tenable(censys_ip, tenable_ips):
+def get_tenable_asset(censys_ip, tenable_ips):
     for tenable_ip in tenable_ips:
         if tenable_ip['ipv4'] == censys_ip:
-            return True
-    return False
+            return tenable_ip
+    return None
 
 # imports all provided IPs (an array) to Tenable Vulnerability Management
 def import_ips_to_tenable(ips):
@@ -102,7 +102,8 @@ def import_ips_to_tenable(ips):
     # go through all ips we are adding from censys
     for censys_ip in ips:
         # Check if the IP is not already present in Tenable.
-        if check_ip_exists_in_tenable(censys_ip, tenable_ips) == False:
+        tenable_asset = get_tenable_asset(censys_ip, tenable_ips)
+        if tenable_asset == None:
 
             print(f"Adding IP {censys_ip} to Tenable")
             
@@ -121,22 +122,32 @@ def remove_ips_from_tenable(ips):
     # get a current list of tenable IPs
     tenable_ips = TIO.assets.list()
 
-    # go through all ips we are adding from censys
+    # go through all ips we are removing from censys
     for censys_ip in ips:
         # Check if the IP is present in Tenable.
-        if check_ip_exists_in_tenable(censys_ip, tenable_ips):
+        tenable_asset = get_tenable_asset(censys_ip, tenable_ips)
+        if tenable_asset != None:
 
-            print(f"Removing IP {censys_ip} to Tenable")
+            # make sure that the IP we are going to remove was imported from a Censys Scan     
+            censys_scan = False
+            tenable_asset_details = TIO.assets.details(tenable_asset['id'])
+            for source in tenable_asset_details['sources']:
+                if source['name'] == 'Censys Scan':
+                    censys_scan = True
+                    break
             
-            removed_asset = TIO.asset.delete(censys_ip)
-
-            if removed_asset is not None:
-                # if the asset was successfully removed from Tenable
+            if censys_scan:
+                print(f"Removing IP {censys_ip} to Tenable")
                 
-                print("Successfully removed disassociated Censys IP from Tenable")
+                removed_asset = TIO.asset.delete(censys_ip)
 
-            else:
-                print("Error removing disassociated Censys IP from Tenable")
+                if removed_asset is not None:
+                    # if the asset was successfully removed from Tenable
+                    
+                    print("Successfully removed disassociated Censys IP from Tenable")
+
+                else:
+                    print("Error removing disassociated Censys IP from Tenable")
 
 def main_loop(sc): 
     logging.info("Checking for new Censys hosts since last run.")
